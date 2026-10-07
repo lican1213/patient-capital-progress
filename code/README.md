@@ -12,6 +12,7 @@
 | 表 5 Heckman（正负两支逆米尔斯比率）、表 4 第（2）列自然年滞后、表 10 功能类型、表 9 第（2）列，以及表 1 中这些变量的描述统计 | `dofiles/ar44_fix_audit.do`（10 月 7 日第二次更新，替代下面各文件里对应的旧格子） |
 | 表 5 工具变量列、表 8 去向 | `dofiles/ar29_iv_dyad_mentor.do` |
 | 表 1 描述统计、表 5 的 KP LM 统计量、表 9 第（1）列、附表 1、附表 2、附表 3、附表 6 | `dofiles/ar31_skeleton_fill.do` |
+| 表 6 第（1）列与附表 2 第（1）列 LMDA、表 1 中 LMDA 的描述统计 | `dofiles/ar42_lmda_mech.do` |
 | 初稿 8 表 5 三个组间 p 值的复现 | `dofiles/ar28_t5_repro.do` |
 | 表 1 原有变量描述统计、表 2 基准、表 4 稳健性、附表 7 安慰剂 | `dofiles/ar34_standalone.do` |
 | 排版成 Word | `scripts/ar35_standalone_tables_docx.py`、`scripts/ar32_skeleton_tables_docx.py`、`scripts/ar22_fanwen_lib.py`（`scripts/ar27_mentor_tables_docx.py` 是重排前的版本） |
@@ -22,6 +23,7 @@
 |---|---|---|
 | 复制、互补、新进入、研发互补的分类，研发型新增，东部企业到中西部的新增 | `scripts/ar43_build_events.py`（按完整明细首次出现认定新增，替代 `ar19_build_complement.py` 和 `ar10_build_rdfix.py` 的对应输出） | 子公司明细 |
 | 修正后的研发标签 | `scripts/ar10_build_rdfix.py` | 子公司明细，剔除名称或经营范围含房地产的子公司 |
+| LMDA（管理者短视） | `scripts/ar39_cninfo_fetch.py` 下载年报，`scripts/ar40_mda_extract.py` 抽取管理层讨论与分析，`scripts/ar41_lmda_build.py` 按胡楠等（2021）词表计算 | 巨潮资讯网年报 PDF |
 | 存续变量 | `scripts/ar06_build_survival.py` | 子公司明细 |
 | 目的省属性、同行业区位熵 | `scripts/ar05_build_round3.py`、`scripts/ar09_build_m7.py` | 市场化指数、上市公司专利与 TFP、证监会行业代码、子公司明细 |
 | 附表 6 的期初生产率换算法 | `scripts/ar12_build_audit.py` | 老师面板 2014 年 TFP，样本少于 10 家的省份设为缺失 |
