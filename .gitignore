@@ -1,0 +1,12 @@
+# 数据、日志与本地文件一律不进仓库
+*.dta
+*.csv
+*.xlsx
+*.xls
+*.sav
+*.parquet
+*.log
+data/
+.DS_Store
+._*
+~$*
