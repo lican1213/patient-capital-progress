@@ -5,6 +5,8 @@
   ar26_mentor_spec.csv（企业层）；ar29_iv_dyad_mentor.csv（工具变量、双边）；
   ar31_skeleton_fill.csv（KP LM、第一阶段、机制两步、异质性交互、五项联合）；ar31_desc.csv（描述统计）
   ar34_standalone.csv（基准、稳健性、Heckman、安慰剂）；ar34_desc.csv（原有变量描述统计）
+  ar44_fix.csv、ar44_desc.csv（第十三轮按 D-135 审计定点修正：Heckman 正负两支 IMR、表4第（2）列自然年滞后、
+  表10与表9第（2）列改用 ar43 的新增事件与功能分类）；修正的格子一律取 ar44，旧值保留在原 CSV 作历史
 格式：master_supporting_docs/journal_benchmarks_20260924/表格格式裁决.md；排版函数见 ar22_fanwen_lib.py
 输出：本 exploration 的 output/tables/回复导师_新表_第九轮_20261007.docx
 运行：python3 explorations/advisor_revision_20261005/scripts/ar35_standalone_tables_docx.py（项目根目录）
@@ -32,6 +34,12 @@ f = pd.read_csv(T / "ar31_skeleton_fill.csv", dtype={"col": str})
 ds = pd.read_csv(T / "ar31_desc.csv")
 z = pd.read_csv(T / "ar34_standalone.csv", dtype={"col": str})
 d0 = pd.read_csv(T / "ar34_desc.csv")
+x = pd.read_csv(T / "ar44_fix.csv", dtype={"col": str})
+dx = pd.read_csv(T / "ar44_desc.csv").set_index("var")
+# 表1中功能类型与研发型新增的描述统计改用 ar44（新口径）
+for v in dx.index:
+    assert (ds["var"] == v).sum() == 1, v
+    ds.loc[ds["var"] == v, ["N", "mean", "sd", "min", "p50", "max"]] = dx.loc[v, ["N", "mean", "sd", "min", "p50", "max"]].values
 
 
 def stars(p):
@@ -99,7 +107,7 @@ body += [[lab.get(r["var"], r["var"]), str(int(r.N)), f4(r["mean"]), f4(r.sd), f
          for _, r in ds.iterrows()]
 L.build(doc, [["变量", "样本量", "均值", "标准差", "最小值", "中位数", "最大值"]], body, label_w=2400, keep=False)
 L.note(doc, "注：Investp、Investc、Invests、Patient及控制变量取基准回归样本，其余变量取其所在回归的估计样本。Investp、Investc、Invests分别为跨省、"
-       "同省异市、同城子公司数量占比；Investnns为新增同省异市子公司数量加1取对数；功能类型新增均为该类新增跨省子公司数量加1取对数；"
+       "同省异市、同城子公司数量占比；Investnns为新增同省异市子公司数量加1取对数；功能类型新增均为该类新增跨省子公司数量加1取对数，新增按子公司在完整子公司明细中首次披露认定；"
        "双边变量取企业、目的省、年份三维面板2015年以后的样本，研发型新增（双边）为当年是否在该省新设研发型子公司。")
 
 # 表2 基准回归结果
@@ -124,33 +132,35 @@ body = sparse("Patient", a + [None] * 4) + sparse("L.Patient", [None] * 3 + s)
 body += [["控制变量"] + yes(7)] + FE2(7) + stats(a + s)
 L.build(doc, [L.nums_head(7), ["", "新增", "新增", "新增", "存续", "存续", "存续", "存续"],
               ["", "Investnn", "Investnc", "Investnns", "DuNum3", "DuRate3", "DuNum5", "DuRate5"]], body, label_w=1900)
-L.note(doc, "注：第（1）（2）列被解释变量为新增跨省子公司数量、注册资本加1取对数，第（3）列为新增同省异市子公司数量加1取对数。第（4）—（7）列以基期跨省子公司存量为基础，取第三、五年仍在年报中披露（持续披露）的子公司数量与比例，"
+L.note(doc, "注：第（1）（2）列被解释变量为新增跨省子公司数量、注册资本加1取对数，第（3）列为新增同省异市子公司数量加1取对数；三者取原面板的现成字段，"
+       "是当年相对上年的净变化，含负值，不同于新设子公司的毛数量，其生成与缩尾顺序待核。第（4）—（7）列以基期跨省子公司存量为基础，取第三、五年仍作为跨省子公司在年报中披露（持续披露）的数量与比例，"
        "要求企业在第三、五年仍在样本中，解释变量取上一期；与原表样本量8127相符的候选口径见附表5。" + L.STD)
 
 # 表4 稳健性检验
 L.caption(doc, "表4 稳健性检验")
 gz = lambda tab, c, v: get(z, tab, c, v)
 pt = [gz("R", 1, "Patient"), None, None, gz("R", 4, "Patient"), gz("R", 5, "Patient"), gz("R", 6, "Patient"), gz("R", 7, "Patient")]
-body = sparse("Patient", pt) + sparse("L.Patient", [None, gz("R", 2, "L_Patient")] + [None] * 5)
+lp2 = get(x, "R", 2, "Lp")   # 自然年滞后（ar44）
+body = sparse("Patient", pt) + sparse("L.Patient", [None, lp2] + [None] * 5)
 body += sparse("Patients", [None, None, gz("R", 3, "Patients")] + [None] * 4)
 for labx, v in (("BeltRoad", "belt_and_road"), ("Yangtze", "yangtze_delta"), ("GreatBay", "greater_bay"), ("Chengyu", "chengyu")):
     body += sparse(labx, [None] * 4 + [gz("R", 5, v)] + [None] * 2)
-allr = [gz("R", 1, "Patient"), gz("R", 2, "L_Patient"), gz("R", 3, "Patients")] + pt[3:]
+allr = [gz("R", 1, "Patient"), lp2, gz("R", 3, "Patients")] + pt[3:]
 body += [["控制变量"] + yes(7)] + FE2(7) + stats(allr)
 L.VARS.update({"Investk", "BeltRoad", "Yangtze", "GreatBay", "Chengyu"})
 L.build(doc, [L.nums_head(7), ["", "替换被\n解释变量", "解释变量\n滞后一期", "替换\n解释变量", "剔除超大\n特大城市", "控制区域\n战略", "PSM\n匹配样本",
                               "剔除\n直辖市\n总部"],
               ["", "Investk", "Investp", "Investp", "Investp", "Investp", "Investp", "Investp"]], body, label_w=1950, keep=False)
-L.note(doc, "注：Investk为跨省子公司注册资本占比；Patients为稳定型机构投资者持股比例（相对流通A股）。第（4）列剔除母公司位于22个超大、特大城市的企业；"
+L.note(doc, "注：Investk为跨省子公司注册资本占比；第（2）列L.Patient为上一自然年的Patient，上一年不在样本中的观测不进入估计；Patients为稳定型机构投资者持股比例（相对流通A股）。第（4）列剔除母公司位于22个超大、特大城市的企业；"
        "第（5）列加入一带一路（BeltRoad）、长三角一体化（Yangtze）、粤港澳大湾区（GreatBay）、成渝双城经济圈（Chengyu）政策虚拟变量，按母公司所在省份和政策起始年份设定；"
        "第（6）列以是否有耐心资本为处理变量，按控制变量做1:1近邻倾向得分匹配（卡尺0.05，共同支撑），用匹配样本回归；第（7）列剔除总部位于北京、上海、天津、重庆的企业。"
        "安慰剂检验见附表7。" + L.STD)
 
 # 表5 内生性检验
 L.caption(doc, "表5 内生性检验")
-h1 = z[(z.tab == "H1") & (z["var"] == "高新技术企业")].iloc[1]   # 第二个选择方程：是否有耐心资本（ar34 中后写入）
-assert abs(float(h1.b) - 0.269) < 5e-4   # 与初稿8报告的 Hitech 系数一致，确认取对了选择方程
-h2p, h2m = get(z, "H2", 3, "Patient"), get(z, "H2", 3, "imr_sel_pat")
+h1 = get(x, "H1", 1, "高新技术企业")   # 选择方程：是否有耐心资本（导师写法）
+assert abs(float(h1.b) - 0.269) < 5e-4
+h2p, h2m = get(x, "H2", "iy", "Patient"), get(x, "H2", "iy", "imr")   # 正负两支 IMR，企业＋行业×年份固定效应
 iv = [get(n, "T7", 1, "Patient_lag1"), get(n, "T7", 2, "lp"), get(n, "T7", 3, "lp")]
 kp = [get(f, "I", c, "kp") for c in (1, 2, 3)]
 body = sparse("Hitech", [h1] + [None] * 4) + sparse("Patient", [None, h2p] + [None] * 3)
@@ -165,10 +175,10 @@ L.VARS.update({"Hitech", "IMR"})
 L.build(doc, [L.nums_head(5), ["", "Heckman两阶段", "Heckman两阶段", "工具变量法", "工具变量法", "工具变量法"],
               ["", "第一阶段", "第二阶段", "同群工具", "PRI签署\n基金数", "PRI签署\n基金持股"],
               ["", "是否有\n耐心资本", "Investp", "Investp", "Investp", "Investp"]], body, label_w=2900, keep=False)
-L.note(doc, "注：第（1）列为Probit选择方程，被解释变量为企业是否有耐心资本，Hitech为是否为高新技术企业，控制年份虚拟变量；第（2）列加入逆米尔斯比率（IMR）。"
+L.note(doc, "注：第（1）列为Probit选择方程，被解释变量为企业是否有耐心资本，Hitech为是否为高新技术企业，控制年份虚拟变量；第（2）列加入逆米尔斯比率（IMR），有耐心资本的企业取φ(xb)/Φ(xb)，没有的取−φ(xb)/[1−Φ(xb)]。"
        "第（3）—（5）列报告工具变量法第二阶段，内生变量为上一期Patient，第一阶段见附表1：第（3）列以滞后同群留一工具Hold(t−1)与SizeG(t−1)为工具，"
-       "即同一年份、同一机构持股分位组或资产规模分位组内其他企业的耐心资本均值；第（4）（5）列以上一期签署联合国负责任投资原则（PRI）的基金数、持股比例为工具，"
-       "控制变量取上一期值。Kleibergen–Paap rk LM统计量的p值均小于0.01。" + L.STD)
+       "即同一年份、同一机构持股分位组或资产规模分位组内其他企业的耐心资本均值；第（4）（5）列以上一期签署联合国负责任投资原则（PRI）的基金数、持股比例为工具。"
+       "第（3）列控制变量取当期值，第（4）（5）列控制变量取上一期值；PRI签署基金数取基金数加1的对数，基金以其管理人签署PRI认定。Kleibergen–Paap rk LM统计量的p值均小于0.01。" + L.STD)
 
 # 表6 机制检验
 L.caption(doc, "表6 机制检验")
@@ -203,22 +213,23 @@ L.note(doc, "注：企业、目的省、年份三维面板，被解释变量为�
 # 表9 去向属性的联合估计与研发型新增
 L.caption(doc, "表9 去向属性的联合估计与研发型新增")
 J = {a: get(f, "J", 1, f"c.L_Patient#c.{a}") for a in ("east", "z_mkt0", "z_rdres0", "z_tfp0", "z_lqw")}
-rd = get(n, "T6", 3, "PxRD")
+rd = get(x, "T6", 3, "PxRD")   # 新增按完整明细首次披露（ar43/ar44）
 body = []
 for a, labx in (("east", "东部"), ("z_mkt0", "市场化程度"), ("z_rdres0", "研发资源"), ("z_tfp0", "期初生产率"), ("z_lqw", "同行业区位熵")):
     body += sparse(f"L.Patient×{labx}", [J[a], rd if a == "z_rdres0" else None], k=1000)
 body += FED(2) + stats([J["east"], rd])
 L.build(doc, [L.nums_head(2), ["", "当年新增", "研发型新增"]], body, label_w=3000)
-L.note(doc, "注：第（1）列把表8第（3）—（7）列的五项目的省属性放入同一回归；第（2）列被解释变量为当年是否在该省新设研发型子公司，研发型按第三方标签"
+L.note(doc, "注：第（1）列把表8第（3）—（7）列的五项目的省属性放入同一回归；第（2）列被解释变量为当年是否在该省新设研发型子公司，新设按子公司在完整子公司明细中首次披露认定，研发型按第三方标签"
        "剔除房地产子公司后认定。期初生产率换用剔除样本少于10家省份的算法后的结果见附表6。系数与标准误均乘以1000。" + L.STD)
 
 # 表10 新增跨省子公司的功能类型
 L.caption(doc, "表10 新增跨省子公司的功能类型")
-rs = [get(m, "T5", c, "Patient") for c in (1, 2, 3, 4, 6, 5)]
+rs = [get(x, "T5", c, "Patient") for c in (1, 2, 3, 4, 6, 5)]   # ar43 新口径
 body = rows("Patient", rs) + [["控制变量"] + yes(6)] + FE2(6) + stats(rs)
 L.build(doc, [L.nums_head(6), ["", "进入新省份", "同功能复制", "功能互补", "研发型", "研发互补", "东部企业到中西部"]], body, label_w=1950)
-L.note(doc, "注：被解释变量为该类新增跨省子公司数量加1取对数。进入新省份指企业上一年在该省没有子公司；同功能复制指上一年在该省已有功能相同的子公司；"
-       "功能互补指上一年在该省已有子公司但功能都不同；研发型按第三方标签剔除房地产子公司后认定；研发互补指研发型新子公司进入上一年已有生产或销售子公司、"
+L.note(doc, "注：被解释变量为该类新增跨省子公司数量加1取对数。新增按子公司在完整子公司明细中首次披露认定，分类要求企业上一年的子公司明细可观察，否则该年不进入估计。"
+       "进入新省份指企业上一年在该省没有子公司；同功能复制指上一年在该省已有功能相同的子公司；"
+       "功能互补指上一年在该省已有带功能标签的子公司，且功能都与新子公司不同，旧子公司都没有功能标签的单独归类，不计入功能互补；研发型按第三方标签剔除房地产子公司后认定；研发互补指研发型新子公司进入上一年已有生产或销售子公司、"
        "但没有研发子公司的省份；第（6）列样本为总部在东部的企业，被解释变量为其在中西部新设的子公司。各类子公司基数不同，系数不宜直接比较大小。" + L.STD)
 
 # 附表1 第一阶段
@@ -279,11 +290,11 @@ L.note(doc, "注：同表9第（1）列，期初生产率改为剔除上市公�
 L.caption(doc, "附表7 安慰剂检验")
 q = get(z, "P", 1, "summary")
 b0 = get(z, "B", 3, "Patient")
-body = [["真实估计系数", f4(float(b0.b))], ["置换估计系数均值", f4(float(q.b))], ["置换估计系数标准差", f4(float(q.se))],
-        ["置换系数不小于真实系数的比例", f4(float(q.p))], ["置换回归中p值小于0.1的比例", f4(float(q.r2a))],
-        ["置换次数", str(int(float(q.N)))]]
+body = [["真实估计系数", f4(float(b0.b))], ["模拟估计系数均值", f4(float(q.b))], ["模拟估计系数标准差", f4(float(q.se))],
+        ["模拟系数不小于真实系数的比例", f4(float(q.p))], ["模拟回归中p值小于0.1的比例", f4(float(q.r2a))],
+        ["模拟次数", str(int(float(q.N)))]]
 L.build(doc, [["项目", "数值"]], body, label_w=3200, full_w=5000)
-L.note(doc, "注：把Patient在基准回归样本内随机打乱后重新估计表2第（3）列，重复1000次。")
+L.note(doc, "注：在基准回归样本内，为每个企业—年份观测有放回地随机抽取一个Patient值作为虚构解释变量，重新估计表2第（3）列，重复1000次。")
 
 # 页脚页码（D-130：方便面谈定位）
 from docx.oxml import OxmlElement  # noqa: E402
