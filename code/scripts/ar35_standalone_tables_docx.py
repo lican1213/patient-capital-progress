@@ -7,6 +7,7 @@
   ar34_standalone.csv（基准、稳健性、Heckman、安慰剂）；ar34_desc.csv（原有变量描述统计）
   ar44_fix.csv、ar44_desc.csv（第十三轮按 D-135 审计定点修正：Heckman 正负两支 IMR、表4第（2）列自然年滞后、
   表10与表9第（2）列改用 ar43 的新增事件与功能分类）；修正的格子一律取 ar44，旧值保留在原 CSV 作历史
+  ar42_lmda.csv、ar42_desc.csv（自建 LMDA：表6第（1）列、附表2第（1）列、表1描述统计）
 格式：master_supporting_docs/journal_benchmarks_20260924/表格格式裁决.md；排版函数见 ar22_fanwen_lib.py
 输出：本 exploration 的 output/tables/回复导师_新表_第九轮_20261007.docx
 运行：python3 explorations/advisor_revision_20261005/scripts/ar35_standalone_tables_docx.py（项目根目录）
@@ -36,6 +37,10 @@ z = pd.read_csv(T / "ar34_standalone.csv", dtype={"col": str})
 d0 = pd.read_csv(T / "ar34_desc.csv")
 x = pd.read_csv(T / "ar44_fix.csv", dtype={"col": str})
 dx = pd.read_csv(T / "ar44_desc.csv").set_index("var")
+# 自建 LMDA：抽取经四轮人工验收通过（README 第十四轮），ar41、ar42 按原规则重跑后入表
+LMDA_READY = True
+lm = pd.read_csv(T / "ar42_lmda.csv").rename(columns={"item": "tab", "stat": "r2a"})
+lm["col"] = "1"
 # 表1中功能类型与研发型新增的描述统计改用 ar44（新口径）
 for v in dx.index:
     assert (ds["var"] == v).sum() == 1, v
@@ -103,6 +108,10 @@ lab = {"Investnns": "同省异市新增", "entry": "当年新设（双边）", "
        "mkt0": "市场化程度", "rdres0": "研发资源", "tfp0": "期初生产率", "lqw": "同行业区位熵"}
 body = [[CN.get(r["var"], r["var"]), str(int(r.N)), f4(r["mean"]), f4(r.sd), f4(r["min"]), f4(r.p50), f4(r["max"])]
         for _, r in d0.iterrows()]
+if LMDA_READY:
+    lmd = pd.read_csv(T / "ar42_desc.csv")
+    k = int(ds.index[ds["var"] == "WW"][0])
+    ds = pd.concat([ds.iloc[:k], lmd, ds.iloc[k:]], ignore_index=True)
 body += [[lab.get(r["var"], r["var"]), str(int(r.N)), f4(r["mean"]), f4(r.sd), f4(r["min"]), f4(r.p50), f4(r["max"])]
          for _, r in ds.iterrows()]
 L.build(doc, [["变量", "样本量", "均值", "标准差", "最小值", "中位数", "最大值"]], body, label_w=2400, keep=False)
@@ -182,11 +191,14 @@ L.note(doc, "注：第（1）列为Probit选择方程，被解释变量为企业
 
 # 表6 机制检验
 L.caption(doc, "表6 机制检验")
-rs = [get(m, "T3", c, "Patient") for c in (1, 2, 3, 5, 6, 7)]
-body = rows("Patient", rs) + [["控制变量"] + yes(6)] + FE2(6) + stats(rs)
-L.build(doc, [L.nums_head(6), ["", "WW", "ASY", "Srisk", "LcomRDp", "LindRDs", "RDexp"]], body, label_w=1800)
-L.note(doc, "注：WW为融资约束指数，ASY为信息不对称，Srisk为供应链风险，LcomRDp为母公司创新，LindRDs为子公司创新，RDexp为集团创新地理分散度。"
-       "LcomRDp取母公司专利总数（独立与联合专利获得量之和）加1的对数，是对原表指标的候选替代，不等同于独立申请口径；LindRDs取子公司独立专利总和的对数。LMDA数据暂缺，补齐后放在第（1）列之前。Resil见附表4，第二步见附表2。" + L.STD)
+rs = ([get(lm, "V4", 1, "LMDA")] if LMDA_READY else []) + [get(m, "T3", c, "Patient") for c in (1, 2, 3, 5, 6, 7)]
+hd = (["LMDA"] if LMDA_READY else []) + ["WW", "ASY", "Srisk", "LcomRDp", "LindRDs", "RDexp"]
+body = rows("Patient", rs) + [["控制变量"] + yes(len(rs))] + FE2(len(rs)) + stats(rs)
+L.build(doc, [L.nums_head(len(rs)), [""] + hd], body, label_w=2050 if LMDA_READY else 1800)
+L.note(doc, ("注：LMDA为管理者短视，按胡楠、薛付婧和王昊楠（2021）的短期视域词表（43个，其中30个为原文明列，同一分词结果下只计这30个词时结论相同），计算其在年报“管理层讨论与分析”中的词频占该部分总词数的比例（乘以100）后加1取对数，年报取自巨潮资讯网，取最后披露的版本；" if LMDA_READY else "注：")
+       + "WW为融资约束指数，ASY为信息不对称，Srisk为供应链风险，LcomRDp为母公司创新，LindRDs为子公司创新，RDexp为集团创新地理分散度。"
+       "LcomRDp取母公司专利总数（独立与联合专利获得量之和）加1的对数，是对原表指标的候选替代，不等同于独立申请口径；LindRDs取子公司独立专利总和的对数。"
+       + ("" if LMDA_READY else "LMDA正在按胡楠等（2021）从年报自建，核对完成后放在第（1）列之前。") + "Resil见附表4，第二步见附表2。" + L.STD)
 
 # 表7 异质性
 L.caption(doc, "表7 异质性分析")
@@ -246,11 +258,12 @@ L.note(doc, "注：对应表5第（3）—（5）列的第一阶段，样本相�
 # 附表2 机制两步
 L.caption(doc, "附表2 机制检验第二步")
 mv = ["WW指数", "ASY", "SCDRisk2_100倍", "M_comA", "l子公司独立专利总和", "集团创新地理分散度"]
-pp = [get(f, "A2", c, "Patient") for c in range(1, 7)]
-mm = [get(f, "A2", c, v) for c, v in zip(range(1, 7), mv)]
-body = rows("Patient", pp) + rows("机制变量", mm) + [["控制变量"] + yes(6)] + FE2(6) + stats(pp)
-L.build(doc, [L.nums_head(6), ["", "WW", "ASY", "Srisk", "LcomRDp", "LindRDs", "RDexp"],
-              ["", "Investp", "Investp", "Investp", "Investp", "Investp", "Investp"]], body, label_w=1800)
+pp = ([get(lm, "S2", 1, "Patient")] if LMDA_READY else []) + [get(f, "A2", c, "Patient") for c in range(1, 7)]
+mm = ([get(lm, "S2", 1, "LMDA")] if LMDA_READY else []) + [get(f, "A2", c, v) for c, v in zip(range(1, 7), mv)]
+k2 = len(pp)
+body = rows("Patient", pp) + rows("机制变量", mm) + [["控制变量"] + yes(k2)] + FE2(k2) + stats(pp)
+L.build(doc, [L.nums_head(k2), [""] + (["LMDA"] if LMDA_READY else []) + ["WW", "ASY", "Srisk", "LcomRDp", "LindRDs", "RDexp"],
+              [""] + ["Investp"] * k2], body, label_w=2050 if LMDA_READY else 1800)
 L.note(doc, "注：被解释变量为Investp，各列同时放入Patient和表头所列机制变量。" + L.STD)
 
 # 附表3 异质性交互项
