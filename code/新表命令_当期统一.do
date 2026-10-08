@@ -1,12 +1,13 @@
-* 新表命令（当期统一版，2026-10-08 下午）
+* 新表命令（当期统一版，2026-10-08 晚，加附表6—10）
 * 用法：把下面四个数据文件的路径改成您电脑上的位置，整份运行；结果写入同目录的“新表命令_当期统一.log”。
 * 这份命令复现新表全部回归（表1 描述统计除外）；新增数据的变量来源见 17 号说明，主面板3 的构造代码需要时另发。
 *   主面板1：您 10 月 8 日发来的主面板1（含区位熵_地理IV_创新指标），企业层各表；
 *   主面板1补充变量：我这次发您的“18_主面板1补充变量.dta”，按 stkcd、year 并入主面板1，表5第（3）—（5）列、表10、附表1、附表3 用；
-*   主面板3：我这次发您的“16_主面板3_企业目的省年份.dta”，表8、表9、附表4；
+*   主面板3：我这次发您的“16_主面板3_企业目的省年份.dta”，表8、表9、附表4、附表6、附表9、附表10；
 *   主面板2：您发来的主面板2（关联公司具体细节），文件最后用它重建“当年新设”，核对主面板3。
 * 控制变量、固定效应、聚类按您的“实证代码2”：11 个控制变量，企业＋行业×年份固定效应，按企业聚类。
-* 耐心资本一律取当期，与基准回归一致；表4第（2）列是您原有的滞后一期稳健性。
+* 耐心资本一律取当期，与基准回归一致；表4第（2）列是您原有的滞后一期稳健性；
+* 表7、表3存续、表8、表9 取上一期的写法放在附表7—10，作稳健性检验。
 * 基期：异质性的调节变量取该企业首个可观察年份的值，回归只用基期之后的年份；
 *       表8、表9 的目的省属性固定在样本期前（市场分割、市场化、研发资源、同行业区位熵取 2010—2013 年均值，期初生产率取 2014 年）。
 * 需要的外部命令：reghdfe、ftools、psmatch2、ivreghdfe、ivreg2、ranktest（ssc install 即可）；中文变量名需要 Stata 14 及以上。
@@ -41,6 +42,11 @@ reghdfe cross_surv3_num Patient $C if 跨省子公司数量 > 0 & year <= 2021, 
 reghdfe cross_surv3_rate Patient $C if 跨省子公司数量 > 0 & year <= 2021, absorb(id ind_year) vce(cluster id)
 reghdfe cross_surv5_num Patient $C if 跨省子公司数量 > 0 & year <= 2019, absorb(id ind_year) vce(cluster id)
 reghdfe cross_surv5_rate Patient $C if 跨省子公司数量 > 0 & year <= 2019, absorb(id ind_year) vce(cluster id)
+* 附表8：解释变量与控制变量取上一期（您原来的写法）
+reghdfe cross_surv3_num L.(Patient $C) if 跨省子公司数量 > 0 & year <= 2021, absorb(id ind_year) vce(cluster id)
+reghdfe cross_surv3_rate L.(Patient $C) if 跨省子公司数量 > 0 & year <= 2021, absorb(id ind_year) vce(cluster id)
+reghdfe cross_surv5_num L.(Patient $C) if 跨省子公司数量 > 0 & year <= 2019, absorb(id ind_year) vce(cluster id)
+reghdfe cross_surv5_rate L.(Patient $C) if 跨省子公司数量 > 0 & year <= 2019, absorb(id ind_year) vce(cluster id)
 
 ********** 表4 稳健性 **********
 * （1）替换被解释变量
@@ -89,16 +95,19 @@ foreach m in ln_myopia_words WW指数 ASY SCDRisk2_100倍 供应链韧性 l母�
     reghdfe 跨省子公司数量占比 Patient `m' $C, absorb(id ind_year) vce(cluster id)
 }
 
-********** 表7 异质性（基期调节）**********
+********** 表7 异质性（基期调节）；附表7 同样写法取上一期 **********
 * 基期：调节变量在该企业首个可观察年份的值（前定）；回归只用基期之后的年份；
 * 基期值的水平项被企业固定效应吸收；固定效应为企业、行业×年份、母公司省份×年份。
-capture drop prov_year
+capture drop prov_year Lp
 egen long prov_year = group(母公司所在省份 year)
+* 上一自然年的 Patient（附表7 用）
+generate double Lp = L.Patient
 foreach M in l母公司异地市场一体化 研发投入占营业收入比例 供应链韧性 {
     capture drop fy Z
     bysort nid (year): egen fy = min(cond(!missing(`M'), year, .))
     bysort nid (year): egen Z = max(cond(year == fy, `M', .))
-    foreach X in Patient {
+    * 表7：当期 Patient；附表7：上一期 Patient（Lp）
+    foreach X in Patient Lp {
         display _newline "==== 调节变量：`M'，解释变量：`X' ===="
         reghdfe 跨省子公司数量占比 c.`X'##c.Z $C if year > fy & !missing(Z), absorb(nid ind_year prov_year) vce(cluster nid)
         * 边际效应：基期调节变量取估计样本 25%、50%、75% 分位数
@@ -181,7 +190,7 @@ count if p < .10
 summarize b
 restore
 
-********** 表8、表9、附表4：企业×目的省×年份 **********
+********** 表8、表9、附表4、附表6、附表9、附表10：企业×目的省×年份 **********
 use "16_主面板3_企业目的省年份.dta", clear
 * 被解释变量 entry：当年是否在该省新设跨省子公司；新设＝子公司第一次出现在子公司明细中；企业首个样本年无法判断，为缺失
 generate byte d_muni = inlist(dest, "北京市", "天津市", "上海市", "重庆市")
@@ -199,7 +208,8 @@ foreach v in mkt0 rdres0 tfp0 lqw tfp0_n10 {
 }
 replace new_rdfix_any = 0 if missing(new_rdfix_any)
 replace new_rdfix_any = . if year <= fy0
-foreach X in Patient {
+* 当期 Patient：表8、表9、附表4；上一期 L_Patient：附表9（同表8）、附表10（同表9）
+foreach X in Patient L_Patient {
     display _newline "==== 解释变量：`X' ===="
     * 表8 第（1）（2）列：基期市场分割
     capture drop Px
@@ -214,13 +224,33 @@ foreach X in Patient {
     }
     * 表9 第（1）列：五项属性联合估计
     reghdfe entry c.`X'#c.(east z_mkt0 z_rdres0 z_tfp0 z_lqw) if year >= 2015, absorb(fy fd dyr) vce(cluster firm)
-    * 附表4：期初生产率剔除上市公司少于 10 家的省份
-    reghdfe entry c.`X'#c.(east z_mkt0 z_rdres0 z_tfp0_n10 z_lqw) if year >= 2015, absorb(fy fd dyr) vce(cluster firm)
+    * 附表4（只取当期）：期初生产率剔除上市公司少于 10 家的省份
+    if "`X'" == "Patient" {
+        reghdfe entry c.`X'#c.(east z_mkt0 z_rdres0 z_tfp0_n10 z_lqw) if year >= 2015, absorb(fy fd dyr) vce(cluster firm)
+    }
     * 表9 第（2）列：研发型新增
     capture drop Px
     generate double Px = `X' * z_rdres0
     reghdfe new_rdfix_any Px, absorb(fy fd dyr) vce(cluster firm)
 }
+
+********** 附表6 市场分割的稳健性与短期机构对照（您原表8的写法，解释变量取当期）**********
+* lndist：母公司城市到目的省的球面距离对数；io_short：当期短期（非长期）主动机构持股比例
+* 把 Patient、io_short 换成 L_Patient、L_io_short，即逐格得到您原表8
+* （1）基准（即表8第（1）列）
+reghdfe entry c.Patient#c.Seg0_z if year >= 2015, absorb(fy fd dyr) vce(cluster firm)
+* （2）加入 Patient×距离对数
+reghdfe entry c.Patient#c.Seg0_z c.Patient#c.lndist if year >= 2015, absorb(fy fd dyr) vce(cluster firm)
+* （3）按企业和目的省双向聚类
+reghdfe entry c.Patient#c.Seg0_z if year >= 2015, absorb(fy fd dyr) vce(cluster firm dest_id)
+* （4）标准化 Patient 与短期机构持股（在 2015 年起的样本上标准化）
+capture drop z_P z_S
+egen double z_P = std(Patient) if year >= 2015
+egen double z_S = std(io_short) if year >= 2015
+reghdfe entry c.z_P#c.Seg0_z c.z_S#c.Seg0_z if year >= 2015, absorb(fy fd dyr) vce(cluster firm)
+* 差异检验：H1 为耐心资本的交互大于短期机构持股的交互，单侧 p 值
+lincom _b[c.z_P#c.Seg0_z] - _b[c.z_S#c.Seg0_z]
+display "单侧p值 = " ttail(r(df), r(estimate)/r(se))
 
 ********** 用主面板2 重建“当年新设”，核对主面板3 的 entry **********
 preserve
