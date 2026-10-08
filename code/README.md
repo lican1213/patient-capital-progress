@@ -1,39 +1,39 @@
 # 代码说明
 
-这里是 2026-10-07 这一轮新表用到的 do 文件和 Python 脚本，供老师复核写法。数据不上传。文件内容与本地实际运行的版本一致，只把本机路径换成了相对路径，比如老师面板所在文件夹写成 `data/mentor_panel`，复核时改成自己电脑上的路径即可。
+这里是 2026-10-08 这一轮新表用到的 do 文件和 Python 脚本，供老师复核写法。数据不上传。文件内容与本地实际运行的版本一致，只把本机路径换成了相对路径，比如老师面板所在文件夹写成 `data/mentor_panel`，复核时改成自己电脑上的路径即可。上一轮（10 月 7 日）的代码放在 `旧版_20261007/`。
 
-## 哪张表来自哪个文件
+## 老师直接运行哪个
+
+`新表命令_当期统一.do`。用老师的主面板1、主面板2 和另外发给老师的两份数据（主面板3、主面板1补充变量），改四个数据路径就能整份运行，复现新表全部回归；写法按老师的“实证代码2”。需要 `reghdfe`、`ftools`、`psmatch2`、`ivreghdfe`、`ivreg2`、`ranktest`，中文变量名要 Stata 14 及以上。
+
+## 哪张表来自哪个文件（本地出表用）
 
 表号对应另外发给老师的新表。新表本身不放在仓库里。
 
 | 表 | 文件 |
 |---|---|
-| 表 3 新增与存续、表 4 稳健性、表 6 机制、表 7 异质性、附表 4、附表 5 | `dofiles/ar26_mentor_spec.do` |
-| 表 5 Heckman（正负两支逆米尔斯比率）、表 4 第（2）列自然年滞后、表 10 功能类型、表 9 第（2）列，以及表 1 中这些变量的描述统计 | `dofiles/ar44_fix_audit.do`（10 月 7 日第二次更新，替代下面各文件里对应的旧格子） |
-| 表 5 工具变量列、表 8 去向 | `dofiles/ar29_iv_dyad_mentor.do` |
-| 表 1 描述统计、表 5 的 KP LM 统计量、表 9 第（1）列、附表 1、附表 2、附表 3、附表 6 | `dofiles/ar31_skeleton_fill.do` |
-| 表 6 第（1）列与附表 2 第（1）列 LMDA、表 1 中 LMDA 的描述统计 | `dofiles/ar42_lmda_mech.do` |
-| 初稿 8 表 5 三个组间 p 值的复现 | `dofiles/ar28_t5_repro.do` |
-| 表 1 原有变量描述统计、表 2 基准、表 4 稳健性、附表 7 安慰剂 | `dofiles/ar34_standalone.do` |
-| 排版成 Word | `scripts/ar35_standalone_tables_docx.py`、`scripts/ar32_skeleton_tables_docx.py`、`scripts/ar22_fanwen_lib.py`（`scripts/ar27_mentor_tables_docx.py` 是重排前的版本） |
+| 表 2 基准、表 3 第（1）—（3）列、表 4 稳健性、表 5 Heckman、表 6 机制、附表 2、附表 3，以及表 1 原有变量 | `dofiles/ar45_unify_mentor_do.do` |
+| 表 3 存续（当期）、表 7 异质性（基期调节）、表 8、表 9、附表 4，以及用主面板2 核对“当年新设” | `dofiles/ar51_oct8_tables.do` |
+| 表 1 存续变量的描述统计 | `dofiles/ar51b_surv_desc.do` |
+| 表 5 工具变量列、附表 1 | `dofiles/ar57_iv_current.do` |
+| 表 10 功能类型、附表 5 安慰剂、表 1 双边与功能类型变量的描述统计 | `dofiles/ar59_sync.do` |
+| 主面板1补充变量（同群工具、PRI、功能类型新增、自建管理者短视） | `dofiles/ar60_build_addon.do` |
+| 表 7 第（1）列换成基期市场分割的试算 | `dofiles/ar58_hetero_seg.do` |
+| 表 8 市场分割换基期（2014 年、当年值）与耐心资本取当期、上一期的比较 | `dofiles/ar49_timing_base.do` |
+| 不显著项的写法检查（百分位排序、缩尾、取对数等） | `dofiles/ar53_xianzhu_current.do` |
 
 ## 中间数据由哪些脚本生成
 
 | 中间数据 | 脚本 | 来源 |
 |---|---|---|
-| 复制、互补、新进入、研发互补的分类，研发型新增，东部企业到中西部的新增 | `scripts/ar43_build_events.py`（按完整明细首次出现认定新增，替代 `ar19_build_complement.py` 和 `ar10_build_rdfix.py` 的对应输出） | 子公司明细 |
-| 修正后的研发标签 | `scripts/ar10_build_rdfix.py` | 子公司明细，剔除名称或经营范围含房地产的子公司 |
-| LMDA（管理者短视） | `scripts/ar39_cninfo_fetch.py` 下载年报，`scripts/ar40_mda_extract.py` 抽取管理层讨论与分析，`scripts/ar40c_manual_sample.py`、`scripts/ar40d_fallback_check.py` 生成人工核对证据，`scripts/ar41_lmda_build.py` 按胡楠等（2021）词表计算 | 巨潮资讯网年报 PDF |
-| 存续变量 | `scripts/ar06_build_survival.py` | 子公司明细 |
-| 目的省属性、同行业区位熵 | `scripts/ar05_build_round3.py`、`scripts/ar09_build_m7.py` | 市场化指数、上市公司专利与 TFP、证监会行业代码、子公司明细 |
-| 附表 6 的期初生产率换算法 | `scripts/ar12_build_audit.py` | 老师面板 2014 年 TFP，样本少于 10 家的省份设为缺失 |
+| 主面板3（企业×目的省×年份） | `scripts/ar51_export_panel3.py` | 子公司明细（与老师主面板2 同源）、目的省属性、区位熵、研发标签 |
+| 市场分割的不同基期 | `scripts/ar49_build_seg_base.py` | 城市对有方向市场分割指数（基于价格指数） |
+| 市场分割逐年相关 | `scripts/ar49c_seg_yearcorr.py` | 同上 |
+| 新增认定与功能分类、研发型新增、东部企业到中西部新增 | `scripts/ar43_build_events.py` | 子公司明细 |
+| 目的省市场化、研发资源，期初生产率，同行业区位熵 | `scripts/ar05_build_round3.py`、`scripts/ar09_build_m7.py` | 市场化指数、上市公司专利与 TFP、证监会行业代码 |
 
-企业、目的省、年份三维面板 `dyad.dta` 和工具变量数据由本地另一组脚本生成，没有放进来。
-
-## 老师只用自己的面板能复核哪些
-
-表 4、表 6、表 7、附表 2、附表 3、附表 4，以及表 3 第（1）至（3）列和初稿 8 表 5 组间 p 值的复现，只需要老师面板，按 `ar26_mentor_spec.do`、`ar31_skeleton_fill.do` 里“导师主面板”那一段和 `ar28_t5_repro.do` 运行即可。其余各表需要子公司明细、双边面板和工具变量数据，只能看写法。
+自建管理者短视的下载、抽取和计算脚本见 `旧版_20261007/scripts/ar39`—`ar41`，这一轮没有变。
 
 ## 运行环境
 
-Stata 18 MP，do 文件开头固定 `version 15`。需要 `reghdfe`、`ftools`、`ivreghdfe`、`ivreg2`、`ranktest`。Python 3.12，需要 pandas、numpy、python-docx。
+Stata 18 MP，do 文件开头固定 `version 15`。Python 3.12，需要 pandas、numpy。
