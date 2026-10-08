@@ -264,7 +264,7 @@ k2 = len(pp)
 body = rows("Patient", pp) + rows("机制变量", mm) + [["控制变量"] + yes(k2)] + FE2(k2) + stats(pp)
 L.build(doc, [L.nums_head(k2), [""] + (["LMDA"] if LMDA_READY else []) + ["WW", "ASY", "Srisk", "LcomRDp", "LindRDs", "RDexp"],
               [""] + ["Investp"] * k2], body, label_w=2050 if LMDA_READY else 1800)
-L.note(doc, "注：被解释变量为Investp，各列同时放入Patient和表头所列机制变量。" + L.STD)
+L.note(doc, "注：被解释变量为Investp，各列同时放入Patient和表头所列机制变量。机制按两步法判断，即看表6中Patient对机制变量的影响，机制变量对Investp的影响以文献论证；本表仅供参考。" + L.STD)
 
 # 附表3 异质性交互项
 L.caption(doc, "附表3 异质性分析交互项估计")
