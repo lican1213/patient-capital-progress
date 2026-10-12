@@ -66,4 +66,4 @@ Stata 18 MP，do 文件开头固定 `version 15`。Python 3.12，需要 pandas�
 | 按近年文献选商品类别 | `scripts/ar79_goods_subsets.py`、`dofiles/ar79_goods_subsets.do` |
 | 缩尾、取对数、年内百分位 | `dofiles/ar80_transforms.do` |
 | 10 月 12 日交互一稿：逐年市场分割、逐年研发资源、不加权距离 | `scripts/ar81_build_rd_year.py`、`dofiles/ar81_mentor_interact.do` |
-
+| 上一年市场分割的北京、直辖市检验；市场化逐年 | `dofiles/ar82_seg_lag_mkt_year.do` |
