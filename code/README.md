@@ -32,11 +32,11 @@
 | 中间数据 | 脚本 | 来源 |
 |---|---|---|
 | 主面板3（企业×目的省×年份） | `scripts/ar51_export_panel3.py`，附表 6 用的三列由 `scripts/ar66_export_panel3_v2.py` 加入，三列市场分割由 `scripts/ar69_export_panel3_v3.py` 改为母公司城市取企业第一年（现发版本） | 子公司明细（与老师主面板2 同源）、目的省属性、区位熵、研发标签；距离对数、短期机构持股 |
-| 市场分割母公司城市取第一年的对比数据 | `scripts/ar68_build_seg0_firstcity.py` | 城市对有方向市场分割指数，先核对能复现原来按当年总部算的值 |
+| 市场分割母公司城市取第一年的对比数据 | `scripts/ar68_build_seg0_firstcity.py` | 城市对市场分割指数，先核对能复现原来按当年总部算的值 |
 | 当期短期机构持股 | `scripts/ar65_build_io_short.py` | 机构持股明细，筛选与旧表 8 相同，不做年份平移 |
-| 企业基期市场分割（等权） | `scripts/ar63_build_eqweight.py` | 城市对有方向市场分割指数，母公司第一年所在城市 |
+| 企业基期市场分割（等权） | `scripts/ar63_build_eqweight.py` | 城市对市场分割指数，母公司第一年所在城市 |
 | 企业基期市场分割（GDP/距离加权） | `scripts/ar64_build_gdpdist.py` | 同上，加老师主面板2 的城市 2014 年 GDP 与城市经纬度 |
-| 市场分割的不同基期 | `scripts/ar49_build_seg_base.py` | 城市对有方向市场分割指数（基于价格指数） |
+| 市场分割的不同基期 | `scripts/ar49_build_seg_base.py` | 城市对市场分割指数（基于价格指数） |
 | 市场分割逐年相关 | `scripts/ar49c_seg_yearcorr.py` | 同上 |
 | 新增认定与功能分类、研发型新增、东部企业到中西部新增 | `scripts/ar43_build_events.py` | 子公司明细 |
 | 目的省市场化、研发资源，期初生产率，同行业区位熵 | `scripts/ar05_build_round3.py`、`scripts/ar09_build_m7.py` | 市场化指数、上市公司专利与 TFP、证监会行业代码 |
@@ -46,3 +46,24 @@
 ## 运行环境
 
 Stata 18 MP，do 文件开头固定 `version 15`。Python 3.12，需要 pandas、numpy。
+
+说明：城市对市场分割数据的文件名带“有方向”，但 A→B 与 B→A 数值完全相同，是两个城市之间的指数。代码里的文件名照原样保留，说明文字统一写“城市对市场分割指数”。
+
+## 10 月 9 日至 12 日新增的代码
+
+做法的逐步说明见 [`../rounds/2026-10-12/处理过程与手法.md`](../rounds/2026-10-12/处理过程与手法.md)。统计年鉴原始表来自国家统计局网站，不上传。
+
+| 内容 | 文件 |
+|---|---|
+| 表 8 市场分割逐省剔除（30 个目的省轮流去掉） | `dofiles/ar71_seg_leaveout.do` |
+| 距离省内按 GDP 加权的试算 | `scripts/ar74_build_gdpdist_prov.py`、`dofiles/ar74_dist_gdpweight.do` |
+| 统计年鉴分地区商品零售价格分类指数录入（16 类，2008—2022） | `scripts/ar75_build_price_panel.py`；图片识别工具 `scripts/ar75_ocr/` |
+| 统计年鉴分地区居民消费价格分类指数录入（8 类，2008—2024） | `scripts/ar76_build_cpi_panel.py` |
+| 省对市场分割指数（桂琦寒等 2006 价格法）、表 7 老师权重与表 8 省对值 | `scripts/ar75_build_prov_seg.py`（含上海修正，两类价格共用） |
+| 年鉴口径表 7、表 8 回归及北京、直辖市检验 | `dofiles/ar75_prov_seg.do`、`dofiles/ar75b_t7_beijing.do`、`dofiles/ar76_prov_seg_cpi8.do`、`dofiles/ar76b_t7_beijing_cpi8.do` |
+| 修正上海后复跑表 7 | `dofiles/ar77_t7_shfix.do` |
+| 近三年、前三年均值与相邻省法 | `scripts/ar78_build_seg_variants.py`、`dofiles/ar78_seg_variants.do` |
+| 按近年文献选商品类别 | `scripts/ar79_goods_subsets.py`、`dofiles/ar79_goods_subsets.do` |
+| 缩尾、取对数、年内百分位 | `dofiles/ar80_transforms.do` |
+| 10 月 12 日交互一稿：逐年市场分割、逐年研发资源、不加权距离 | `scripts/ar81_build_rd_year.py`、`dofiles/ar81_mentor_interact.do` |
+
