@@ -70,3 +70,8 @@ Stata 18 MP，do 文件开头固定 `version 15`。Python 3.12，需要 pandas�
 | 老师城市对指数的逐年原始值、三年均值 | `scripts/ar83_build_seg_raw.py` |
 | 4 种时点 × 5 种处理的市场分割写法 | `dofiles/ar83_seg_scale.do` |
 | 前三年均值年内百分位的稳健性 | `dofiles/ar84_rk_robust.do` |
+| 新表 8（时变版）：老师可直接运行的命令 | `表8命令_时变版.do`（需 16 号、20 号数据） |
+| 20 号数据：市场分割前三年均值、市场化与研发上一年 | `scripts/ar85_export_t8vars.py` |
+| 新表 8 本地出表、Word | `dofiles/ar85_t8_timevary.do`、`scripts/ar85_t8_docx.py` |
+| 新表 8 独立核对（构造重算、命令复跑、表格比对） | `scripts/ar85_audit.py` |
+| 百分位改在不重复数值上排序的检验 | `dofiles/ar85b_rank_distinct.do` |
