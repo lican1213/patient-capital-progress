@@ -67,3 +67,6 @@ Stata 18 MP，do 文件开头固定 `version 15`。Python 3.12，需要 pandas�
 | 缩尾、取对数、年内百分位 | `dofiles/ar80_transforms.do` |
 | 10 月 12 日交互一稿：逐年市场分割、逐年研发资源、不加权距离 | `scripts/ar81_build_rd_year.py`、`dofiles/ar81_mentor_interact.do` |
 | 上一年市场分割的北京、直辖市检验；市场化逐年 | `dofiles/ar82_seg_lag_mkt_year.do` |
+| 老师城市对指数的逐年原始值、三年均值 | `scripts/ar83_build_seg_raw.py` |
+| 4 种时点 × 5 种处理的市场分割写法 | `dofiles/ar83_seg_scale.do` |
+| 前三年均值年内百分位的稳健性 | `dofiles/ar84_rk_robust.do` |
