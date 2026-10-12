@@ -75,3 +75,5 @@ Stata 18 MP，do 文件开头固定 `version 15`。Python 3.12，需要 pandas�
 | 新表 8 本地出表、Word | `dofiles/ar85_t8_timevary.do`、`scripts/ar85_t8_docx.py` |
 | 新表 8 独立核对（构造重算、命令复跑、表格比对） | `scripts/ar85_audit.py` |
 | 百分位改在不重复数值上排序的检验 | `dofiles/ar85b_rank_distinct.do` |
+| 当年值、省内权重、东中西、GDP 高低、研发薄弱三重交互 | `scripts/ar86_build_dest_yearly.py`、`dofiles/ar86_dest_current.do` |
+| 复现老师区位熵四组与东中西分组；组间差异检验（堆叠回归） | `dofiles/ar87_mentor_groups.do`、`dofiles/ar87b_group_diff.do` |
